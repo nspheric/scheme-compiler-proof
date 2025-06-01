@@ -95,6 +95,6 @@ eval (If e1 (BoolExp True) e2) s"
 
 lemma "eval (desugar a s) s = eval a s"
   apply (induction a)
-             apply (auto split: exp.split)
+  apply (auto split: exp.split)
   done
 end 
