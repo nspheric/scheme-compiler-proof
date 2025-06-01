@@ -21,7 +21,7 @@ datatype exp =
   | Plus exp exp
   | Subtract exp exp
   | If exp exp exp
-(* lambda "var list" exp *)
+(* lambda 'var list exp *)
 
 datatype cnd =
     Cnd2 exp exp
@@ -53,11 +53,13 @@ fun eval :: "exp ⇒ state ⇒ exp" where
 | "eval (VarExp v) s = s v"
 | "eval (And e1 e2) s =
      (case (eval e1 s, eval e2 s) of
-        (BoolExp True, BoolExp True) ⇒ BoolExp True
+        (BoolExp True, BoolExp True) ⇒ BoolExp True 
+      | (IntExp n1, IntExp n2) ⇒ IntExp n2
       | _ ⇒ BoolExp False)"
 | "eval (Or e1 e2) s = 
      (case (eval e1 s, eval e2 s) of
         (BoolExp False, BoolExp False) ⇒ BoolExp False 
+      | (IntExp n1, IntExp n2) ⇒ IntExp n1
       | _ ⇒ BoolExp True)"
 | "eval (Eql e1 e2) s =
      (case (eval e1 s, eval e2 s) of
@@ -86,8 +88,12 @@ fun eval :: "exp ⇒ state ⇒ exp" where
       | _ ⇒ IntExp 0)"  
 
 fun desugar :: "exp ⇒ state ⇒ exp" where 
-"desugar (And e1 e2) s =
+"desugar (And (IntExp e1) (IntExp e2)) s =
+IntExp e2"
+| "desugar (And e1 e2) s =
 eval (If e1 e2 (BoolExp False)) s"
+| "desugar (Or (IntExp e1) (IntExp e2)) s =
+IntExp e1"
 | "desugar (Or e1 e2) s =
 eval (If e1 (BoolExp True) e2) s"
 | "desugar e s = e"
