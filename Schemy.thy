@@ -108,7 +108,7 @@ else BoolExp False
   | (_, _) ⇒
 if isNotBool e1 | isNotBool e2 
 then e2
-else (And (eval e1 s) (eval e2 s)))"
+else eval (And (eval e1 s) (eval e2 s))) s"
 | "eval (Or e1 e2) s = 
 (case (e1, e2) of
    (BoolExp b1, BoolExp b2) ⇒ 
@@ -118,21 +118,21 @@ else BoolExp True
   | (_, _) ⇒ 
 if isNotBool e1 | isNotBool e2 
 then e1 
-else (Or (eval e1 s) (eval e2 s)))"                            
+else eval (Or (eval e1 s) (eval e2 s))) s"                            
 | "eval (Eql e1 e2) s = 
 (if isAtomic e1 & isAtomic e2
 then BoolExp (e1 = e2)
-else Eql (eval e1 s) (eval e2 s))"
+else eval Eql (eval e1 s) (eval e2 s)) s"
 | "eval (Less e1 e2) s =
 (case (e1,e2) of
   (IntExp e3, IntExp e4) ⇒
     (BoolExp (e3 < e4))
-  | (_, _) ⇒ Less (eval e1 s) (eval e2 s))"
+  | (_, _) ⇒ eval Less (eval e1 s) (eval e2 s)) s"
 | "eval (Greater e1 e2) s =             
 (case (e1, e2) of 
   (IntExp e3, IntExp e4) ⇒
    BoolExp (e3 > e4)
-  | (_, _) ⇒ Greater (eval e1 s) (eval e2 s))"
+  | (_, _) ⇒ eval Greater (eval e1 s) (eval e2 s)) s"
 | "eval (When cnd thn) s = 
 (case (eval cnd s) of 
   (BoolExp True) ⇒ eval thn s
