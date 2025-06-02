@@ -174,10 +174,13 @@ else e2)"
 | "desugar (BoolExp b) = BoolExp b"
 
 (* Now, we need to prove that the desugarer preserves the semantics of
-`eval`. We need to prove that the IRs preserve the semantics as well. And then prove that the code generator, via the stack machine semantics, preserve the semantics. At least this is my intuition.
+`eval`. We need to prove that the IRs preserve the semantics as well. And then prove 
+that the code generator, via the stack machine semantics, preserve the semantics. 
+At least this is my intuition.
 
 Formally, you model the semantics using big or small step operational semantics.
-Operational semantics and ASTs are the primary ways to model programs as mathematical objects. We can then prove properties of such programs.
+Operational semantics and ASTs are the primary ways to model programs as mathematical objects. 
+We can then prove properties of such programs.
 
 In the dragon book, second edition, it says that correctness is crucial
 for compilers. And it happens that one mathematical property of compilers is correctness.
