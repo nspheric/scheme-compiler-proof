@@ -47,7 +47,7 @@ fun isBool :: "exp  ⇒ bool" where
 | "isBool _ = False"
                     
 datatype cnd =
-    Cnd2 exp exp
+    Cnd2 exp exp       
   | Cnd1 exp
 
 datatype binding = Binding var exp
@@ -67,6 +67,8 @@ fun getExps :: "binding list ⇒ exp list" where
 | "getExps (bind # xs) = getExp bind # getExps xs"
 
 type_synonym state = "var ⇒ exp"
+
+(* informal semantics of Scheme via an interpreter *)
 
 fun eval :: "exp ⇒ state ⇒ exp" where
   "eval (IntExp n) _ = IntExp n"
@@ -122,6 +124,7 @@ else eval thn s)"
         (IntExp n1, IntExp n2) ⇒ IntExp (n1 - n2)
       | _ ⇒ IntExp 0)"  
 
+(* informal semantics of the desugarer via an intepreter *)
 fun desugar :: "exp ⇒ exp" where 
 "desugar (And e1 e2) = 
 (if (isBool e1) & (isBool e2) 
@@ -141,6 +144,15 @@ else e2)"
 | "desugar (IntExp n) = IntExp n"
 | "desugar (BoolExp b) = BoolExp b"
 
+(* Now, we need to prove that the desugarer preserves the semantics of
+`eval`. We need to prove that the IRs preserve the semantics as well. And then prove that the code generator, via the stack machine semantics, preserve the semantics. At least this is my intuition.
+
+Formally, you model the semantics using big or small step operational semantics.
+Operational semantics and ASTs are the primary ways to model programs as mathematical objects. We can then prove properties of such programs.
+
+In the dragon book, second edition, it says that correctness is crucial
+for compilers. And it happens that one mathematical property of compilers is correctness.
+*)
 lemma var1: "eval (desugar (VarExp a)) s = eval (VarExp a) s"
   apply (induction a)
   apply(auto) 
@@ -150,11 +162,18 @@ lemma bool1: "eval (desugar (BoolExp a)) s = eval (BoolExp a) s"
    apply(auto)  
 
 lemma desugar1: "eval (desugar (Quote a)) s = eval (Quote a) s"
-  apply(induction a)
-             apply (auto)       
+  apply(induction a)         
+               apply (auto) 
 
-theorem desugarer: "eval (desugar a) s = eval a s" 
-  apply (induction a)
+lemma desugar2: "desugar a1 = a1 ⟹ desugar a2 = a2 ⟹ isBool a1 ⟹ isBool a2 ⟹ False"
+  apply(induction a1)
+  apply (auto)    
+lemma desugar3: "desugar a2 = a2 ⟹ isBool a2 ⟹ False"
+  apply (induction a2)
+               apply (auto) 
+
+theorem desugarer: "eval (desugar a) s = eval a s"               
+  apply (induction a)    
              apply (simp)
 
 
