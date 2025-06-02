@@ -15,8 +15,16 @@ datatype exp =
   | Less exp exp
   | Greater exp exp
   | Plus exp exp
-  | Subtract exp exp
-  | If exp exp exp 
+  | Subtract exp exp      
+  | If exp exp exp
+  | Unless exp exp 
+  | When exp exp  
+(* | Begin "exp list" *)
+(* | LetStar "binding list" exp *)
+(* | LetRec "binding list" exp *)
+(* | Let "binding list" exp *)
+(* | Lambda "var list" exp *)
+(* | Application "exp list" *)
 
 (* instruction datatype taken from "concrete semantics" 
 i.e., http://concrete-semantics.org/concrete-semantics.pdf *)
@@ -89,9 +97,17 @@ else e2)"
 | "eval (Greater e1 e2) s =             
      (case (eval e1 s, eval e2 s) of
         (IntExp n1, IntExp n2) ⇒ BoolExp (n1 > n2)
-      | _ ⇒ BoolExp False)"     
+      | _ ⇒ BoolExp False)"
+| "eval (When cnd thn) s = 
+(case (eval cnd s) of 
+  (BoolExp True) ⇒ eval thn s
+  | _ ⇒ BoolExp False)" 
+| "eval (Unless cnd thn) s =
+(case (eval cnd s) of 
+   (BoolExp False) ⇒ eval thn s
+   | _ ⇒ BoolExp False)"                      
 | "eval (If cnd thn els) s = 
-(if (isBool cnd)
+(if (isBool cnd)                     
 then
      (case eval cnd s of             
         BoolExp True ⇒ eval thn s 
@@ -109,9 +125,11 @@ else eval thn s)"
 fun desugar :: "exp ⇒ exp" where 
 "desugar (And e1 e2) = 
 (if (isBool e1) & (isBool e2) 
-then If e1 e2 (BoolExp False)
+then If e1 e2 (BoolExp False)        
 else e2)"
-| "desugar (Or e1 e2)  = If e1 (BoolExp True) e2"
+| "desugar (Or e1 e2) = If e1 (BoolExp True) e2"
+| "desugar (When cnd thn) = If cnd thn (BoolExp False)"
+| "desugar (Unless cnd thn) = If cnd (BoolExp False) thn"
 | "desugar (If cnd thn els) = If (desugar cnd) (desugar thn) (desugar els)"
 | "desugar (Plus e1 e2) = Plus (desugar e1) (desugar e2)"
 | "desugar (Subtract e1 e2) = Subtract (desugar e1) (desugar e2)"
