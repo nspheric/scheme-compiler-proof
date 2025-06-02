@@ -18,7 +18,7 @@ datatype exp =
   | Subtract exp exp
   | If exp exp exp 
 
-fun isBool :: "exp  ⇒ bool" where 
+fun isBool :: "exp  ⇒ bool" where
 "isBool (And e1 e2) = True"
 | "isBool (Or e1 e2) = True" 
 | "isBool (BoolExp e1) = True"
@@ -101,7 +101,7 @@ fun desugar :: "exp ⇒ exp" where
 then If e1 e2 (BoolExp False)
 else e2)"
 | "desugar (Or e1 e2)  = If e1 (BoolExp True) e2"
-| "desugar (If c t f) = If (desugar c) (desugar t) (desugar f)"
+| "desugar (If cnd thn els) = If (desugar cnd) (desugar thn) (desugar els)"
 | "desugar (Plus e1 e2) = Plus (desugar e1) (desugar e2)"
 | "desugar (Subtract e1 e2) = Subtract (desugar e1) (desugar e2)"
 | "desugar (Eql e1 e2) = Eql (desugar e1) (desugar e2)"
@@ -109,12 +109,12 @@ else e2)"
 | "desugar (Greater e1 e2) = Greater (desugar e1) (desugar e2)"
 | "desugar (Quote e) = Quote (desugar e)"
 | "desugar (VarExp v) = VarExp v"            
-| "desugar (IntExp i) = IntExp i"
-| "desugar (BoolExp b) = BoolExp b" 
+| "desugar (IntExp n) = IntExp n"
+| "desugar (BoolExp b) = BoolExp b"
 
 lemma var1: "eval (desugar (VarExp a)) s = eval (VarExp a) s"
   apply (induction a)
-  apply(auto)
+  apply(auto) 
 
 lemma bool1: "eval (desugar (BoolExp a)) s = eval (BoolExp a) s"
   apply(induction a)
@@ -127,9 +127,11 @@ lemma desugar1: "eval (desugar (Quote a)) s = eval (Quote a) s"
 theorem desugarer: "eval (desugar a) s = eval a s" 
   apply (induction a)
              apply (simp)
-                           
 
-           
+
+
+
+
 
                              
                 
