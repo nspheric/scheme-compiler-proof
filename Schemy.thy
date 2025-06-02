@@ -1,17 +1,13 @@
 theory Schemy
   imports Main
-begin
+begin                  
 
 datatype var = Var string
 
-type_synonym bool_exp = bool
-
-type_synonym intexp = int
-
 datatype exp =
-    IntExp intexp
+    IntExp int
   | VarExp var
-  | BoolExp bool_exp
+  | BoolExp bool
   | Quote exp
   | And exp exp
   | Or exp exp
@@ -20,15 +16,22 @@ datatype exp =
   | Greater exp exp
   | Plus exp exp
   | Subtract exp exp
-  | If exp exp exp
-(* lambda 'var list exp *)
+  | If exp exp exp 
 
+fun isBool :: "exp  ⇒ bool" where 
+"isBool (And e1 e2) = True"
+| "isBool (Or e1 e2) = True" 
+| "isBool (BoolExp e1) = True"
+| "isBool (Eql e1 e2) = True"
+| "isBool (Less e1 e2) = True" 
+| "isBool (Greater e1 e2) = True"
+| "isBool _ = False"
+                    
 datatype cnd =
     Cnd2 exp exp
   | Cnd1 exp
 
 datatype binding = Binding var exp
-
 
 fun getVar :: "binding ⇒ var" where 
   "getVar (Binding v e) = v"
@@ -50,34 +53,39 @@ fun eval :: "exp ⇒ state ⇒ exp" where
   "eval (IntExp n) _ = IntExp n"
 | "eval (BoolExp b) _ = BoolExp b"
 | "eval (Quote e) _ = e"
-| "eval (VarExp v) s = s v"
-| "eval (And e1 e2) s =
-     (case (eval e1 s, eval e2 s) of
-        (BoolExp True, BoolExp True) ⇒ BoolExp True 
-      | (IntExp n1, IntExp n2) ⇒ IntExp n2
-      | _ ⇒ BoolExp False)"
-| "eval (Or e1 e2) s = 
+| "eval (VarExp v) s = s v" 
+| "eval (And e1 e2) s = 
+(if (isBool e1) & (isBool e2) 
+then
+case (eval e1 s, eval e2 s) of
+(BoolExp True, BoolExp True) ⇒ BoolExp True
+| _ ⇒ BoolExp False
+else e2)"    
+| "eval (Or e1 e2) s =               
      (case (eval e1 s, eval e2 s) of
         (BoolExp False, BoolExp False) ⇒ BoolExp False 
       | (IntExp n1, IntExp n2) ⇒ IntExp n1
-      | _ ⇒ BoolExp True)"
-| "eval (Eql e1 e2) s =
+      | _ ⇒ BoolExp True)"                  
+| "eval (Eql e1 e2) s =                     
      (case (eval e1 s, eval e2 s) of
         (IntExp n1, IntExp n2) ⇒ BoolExp (n1 = n2)
       | (BoolExp b1, BoolExp b2) ⇒ BoolExp (b1 = b2)
       | _ ⇒ BoolExp False)"
 | "eval (Less e1 e2) s =
-     (case (eval e1 s, eval e2 s) of
+     (case (eval e1 s, eval e2 s) of    
         (IntExp n1, IntExp n2) ⇒ BoolExp (n1 < n2)
       | _ ⇒ BoolExp False)"
-| "eval (Greater e1 e2) s =
+| "eval (Greater e1 e2) s =             
      (case (eval e1 s, eval e2 s) of
         (IntExp n1, IntExp n2) ⇒ BoolExp (n1 > n2)
-      | _ ⇒ BoolExp False)"
-| "eval (If cnd thn els) s =
-     (case eval cnd s of 
+      | _ ⇒ BoolExp False)"     
+| "eval (If cnd thn els) s = 
+(if (isBool cnd)
+then
+     (case eval cnd s of             
         BoolExp True ⇒ eval thn s 
-      | _ ⇒ eval els s)"
+      | _ ⇒ eval els s)
+else eval thn s)"            
 | "eval (Plus e1 e2) s =
      (case (eval e1 s, eval e2 s) of
         (IntExp n1, IntExp n2) ⇒ IntExp (n1 + n2)
@@ -87,20 +95,28 @@ fun eval :: "exp ⇒ state ⇒ exp" where
         (IntExp n1, IntExp n2) ⇒ IntExp (n1 - n2)
       | _ ⇒ IntExp 0)"  
 
-fun desugar :: "exp ⇒ state ⇒ exp" where 
-"desugar (And (IntExp e1) (IntExp e2)) s =
-IntExp e2"
-| "desugar (And e1 e2) s =
-eval (If e1 e2 (BoolExp False)) s"
-| "desugar (Or (IntExp e1) (IntExp e2)) s =
-IntExp e1"
-| "desugar (Or e1 e2) s =
-eval (If e1 (BoolExp True) e2) s"
-| "desugar e s = e"
+fun desugar :: "exp ⇒ exp" where 
+"desugar (And e1 e2) = 
+(if (isBool e1) & (isBool e2) 
+then If e1 e2 (BoolExp False)
+else e2)"
+| "desugar (Or e1 e2)  = If e1 (BoolExp True) e2"
+| "desugar (If c t f) = If (desugar c) (desugar t) (desugar f)"
+| "desugar (Plus e1 e2) = Plus (desugar e1) (desugar e2)"
+| "desugar (Subtract e1 e2) = Subtract (desugar e1) (desugar e2)"
+| "desugar (Eql e1 e2) = Eql (desugar e1) (desugar e2)"
+| "desugar (Less e1 e2) = Less (desugar e1) (desugar e2)"
+| "desugar (Greater e1 e2) = Greater (desugar e1) (desugar e2)"
+| "desugar (Quote e) = Quote (desugar e)"
+| "desugar (VarExp v) = VarExp v"            
+| "desugar (IntExp i) = IntExp i"
+| "desugar (BoolExp b) = BoolExp b" 
 
-
-lemma "eval (desugar a s) s = eval a s"
+lemma desugar1: "eval a s = desugar a" 
   apply (induction a)
-             apply (auto split: exp.split)
-  done
-end 
+  apply (auto)
+       
+theorem desugarer: "eval (desugar a) s = eval a s" 
+  apply (induction a)
+             apply (auto)
+                                             
