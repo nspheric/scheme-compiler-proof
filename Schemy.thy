@@ -100,39 +100,32 @@ fun eval :: "exp ⇒ state ⇒ exp" where
 | "eval (Quote e) _ = e"
 | "eval (VarExp v) s =  s v"
 | "eval (And e1 e2) s = 
-(case (e1, e2) of 
+(case (eval e1 s, eval e2 s) of 
   (BoolExp b1, BoolExp b2) ⇒
 if isTrue b1 & isTrue b2 
 then BoolExp True
 else BoolExp False
-  | (_, _) ⇒
-if isNotBool e1 | isNotBool e2 
-then e2
-else eval (And (eval e1 s) (eval e2 s)) s)"
+  | (_, _) ⇒ e2)"
 | "eval (Or e1 e2) s = 
-(case (e1, e2) of
+(case (eval e1 s, eval e2 s) of
    (BoolExp b1, BoolExp b2) ⇒ 
 if isFalse b1 & isFalse b2 
 then BoolExp False 
 else BoolExp True
-  | (_, _) ⇒ 
-if isNotBool e1 | isNotBool e2 
-then e1 
-else eval (Or (eval e1 s) (eval e2 s)) s)"                            
+  | (_, _) ⇒ e1)"                           
 | "eval (Eql e1 e2) s = 
-(if isAtomic e1 & isAtomic e2
-then BoolExp (e1 = e2)
-else eval (Eql (eval e1 s) (eval e2 s)) s)"
+(case (eval e1 s, eval e2 s) of
+  (_, _) ⇒ BoolExp (e1 = e2))"
 | "eval (Less e1 e2) s =
-(case (e1,e2) of
+(case (eval e1 s, eval e2 s) of
   (IntExp e3, IntExp e4) ⇒
-    (BoolExp (e3 < e4))
-  | (_, _) ⇒ eval (Less (eval e1 s) (eval e2 s)) s)"
+    BoolExp (e3 < e4)
+ | _ ⇒  BoolExp False)"
 | "eval (Greater e1 e2) s =             
-(case (e1, e2) of 
+(case (eval e1 s, eval e2 s) of 
   (IntExp e3, IntExp e4) ⇒
    BoolExp (e3 > e4)
-  | (_, _) ⇒ eval (Greater (eval e1 s) (eval e2 s)) s)"
+  | (_, _) ⇒ BoolExp False)"
 | "eval (When cnd thn) s = 
 (case (eval cnd s) of 
   (BoolExp True) ⇒ eval thn s
