@@ -112,9 +112,21 @@ else e2)"
 | "desugar (IntExp i) = IntExp i"
 | "desugar (BoolExp b) = BoolExp b" 
 
+lemma var1: "eval (desugar (VarExp a)) s = eval (VarExp a) s"
+  apply (induction a)
+  apply(auto)
+
+lemma bool1: "eval (desugar (BoolExp a)) s = eval (BoolExp a) s"
+  apply(induction a)
+   apply(auto)  
+
+lemma desugar1: "eval (desugar (Quote a)) s = eval (Quote a) s"
+  apply(induction a)
+             apply (auto)       
+
 theorem desugarer: "eval (desugar a) s = eval a s" 
   apply (induction a)
-             apply (auto)
+             apply (simp)
                            
 
            
