@@ -82,7 +82,6 @@ fun isFalse :: "bool ⇒ bool" where
 "isFalse False = True"
 | "isFalse True = False"
 
-(* informal semantics of Scheme via an interpreter *)
 fun isAtomic :: "exp ⇒ bool" where
 "isAtomic (IntExp n) = True"
 | "isAtomic (VarExp v) = True"
@@ -93,6 +92,7 @@ fun isBoolean :: "exp ⇒ bool" where
 "isBoolean (BoolExp b) = True"
 | "isBoolean _ = False"
 
+(* informal semantics of "Scheme" via an interpreter *)
 type_synonym state = "vname ⇒ exp"
 fun eval :: "exp ⇒ state ⇒ exp" where
   "eval (IntExp n) _ = IntExp n"
@@ -153,7 +153,6 @@ Plus (eval e1 s) (eval e2 s)"
 | "eval (Subtract e1 e2) s =
 Subtract (eval e1 s) (eval e2 s)"
 
-(* informal semantics of the desugarer via an intepreter *)
 fun desugar :: "exp ⇒ exp" where 
 "desugar (And e1 e2) = 
 (if (isBool e1) & (isBool e2) 
