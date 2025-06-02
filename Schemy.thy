@@ -136,18 +136,18 @@ else Eql (eval e1 s) (eval e2 s))"
 | "eval (When cnd thn) s = 
 (case (eval cnd s) of 
   (BoolExp True) ⇒ eval thn s
-  | _ ⇒ BoolExp False)" 
+  | _ ⇒ 
+if isNotBool cnd 
+then (eval thn s)
+else BoolExp False)" 
 | "eval (Unless cnd thn) s =
 (case (eval cnd s) of 
    (BoolExp False) ⇒ eval thn s
-   | _ ⇒ BoolExp False)"                      
+   | _ ⇒ BoolExp False)"                  
 | "eval (If cnd thn els) s = 
-(if (isBool cnd)                     
-then
-     (case eval cnd s of             
+(case eval cnd s of             
         BoolExp True ⇒ eval thn s 
-      | _ ⇒ eval els s)
-else eval thn s)"            
+      | _ ⇒ eval els s)"            
 | "eval (Plus e1 e2) s = 
 Plus (eval e1 s) (eval e2 s)"
 | "eval (Subtract e1 e2) s =
