@@ -1,12 +1,12 @@
 theory Schemy
   imports Main
-begin                  
+begin
 
-datatype var = Var string
+type_synonym vname = string
 
 datatype exp =
     IntExp int
-  | VarExp var
+  | VarExp vname
   | BoolExp bool
   | Quote exp
   | And exp exp
@@ -28,6 +28,7 @@ datatype exp =
 
 (* instruction datatype taken from "concrete semantics" 
 i.e., http://concrete-semantics.org/concrete-semantics.pdf *)
+
 datatype instruction =
    LOADI int 
    | LOAD string 
@@ -45,20 +46,26 @@ fun isBool :: "exp  ⇒ bool" where
 | "isBool (Less e1 e2) = True" 
 | "isBool (Greater e1 e2) = True"
 | "isBool _ = False"
-                    
+
+fun isNotBool :: "exp ⇒ bool" where 
+"isNotBool (IntExp n) = True"
+| "isNotBool (VarExp n) = True"
+| "isNotBool (Quote q) = True"
+| "isNotBool _ = False"
+
 datatype cnd =
     Cnd2 exp exp       
   | Cnd1 exp
 
-datatype binding = Binding var exp
+datatype binding = Binding vname exp
 
-fun getVar :: "binding ⇒ var" where 
+fun getVar :: "binding ⇒ vname" where 
   "getVar (Binding v e) = v"
 
 fun getExp :: "binding ⇒ exp" where 
   "getExp (Binding v e) = e"
 
-fun getParams :: "binding list ⇒ var list" where
+fun getParams :: "binding list ⇒ vname list" where
   "getParams [] = []"
 | "getParams (bind # xs) = getVar bind # getParams xs"
 
@@ -66,40 +73,66 @@ fun getExps :: "binding list ⇒ exp list" where
   "getExps [] = []"
 | "getExps (bind # xs) = getExp bind # getExps xs"
 
-type_synonym state = "var ⇒ exp"
+
+fun isTrue :: "bool ⇒ bool" where 
+"isTrue True = True"
+| "isTrue False = False"
+
+fun isFalse :: "bool ⇒ bool" where 
+"isFalse False = True"
+| "isFalse True = False"
 
 (* informal semantics of Scheme via an interpreter *)
+fun isAtomic :: "exp ⇒ bool" where
+"isAtomic (IntExp n) = True"
+| "isAtomic (VarExp v) = True"
+| "isAtomic (BoolExp b) = True"
+| "isAtomic _ = False"
 
+fun isBoolean :: "exp ⇒ bool" where
+"isBoolean (BoolExp b) = True"
+| "isBoolean _ = False"
+
+type_synonym state = "vname ⇒ exp"
 fun eval :: "exp ⇒ state ⇒ exp" where
   "eval (IntExp n) _ = IntExp n"
 | "eval (BoolExp b) _ = BoolExp b"
 | "eval (Quote e) _ = e"
-| "eval (VarExp v) s = s v" 
+| "eval (VarExp v) s =  s v"
 | "eval (And e1 e2) s = 
-(if (isBool e1) & (isBool e2) 
-then
-case (eval e1 s, eval e2 s) of
-(BoolExp True, BoolExp True) ⇒ BoolExp True
-| _ ⇒ BoolExp False
-else e2)"    
-| "eval (Or e1 e2) s =               
-     (case (eval e1 s, eval e2 s) of
-        (BoolExp False, BoolExp False) ⇒ BoolExp False 
-      | (IntExp n1, IntExp n2) ⇒ IntExp n1
-      | _ ⇒ BoolExp True)"                  
-| "eval (Eql e1 e2) s =                     
-     (case (eval e1 s, eval e2 s) of
-        (IntExp n1, IntExp n2) ⇒ BoolExp (n1 = n2)
-      | (BoolExp b1, BoolExp b2) ⇒ BoolExp (b1 = b2)
-      | _ ⇒ BoolExp False)"
+(case (e1, e2) of 
+  (BoolExp b1, BoolExp b2) ⇒
+if isTrue b1 & isTrue b2 
+then BoolExp True
+else BoolExp False
+  | (_, _) ⇒
+if isNotBool e1 | isNotBool e2 
+then e2
+else (And (eval e1 s) (eval e2 s)))"
+| "eval (Or e1 e2) s = 
+(case (e1, e2) of
+   (BoolExp b1, BoolExp b2) ⇒ 
+if isFalse b1 & isFalse b2 
+then BoolExp False 
+else BoolExp True
+  | (_, _) ⇒ 
+if isNotBool e1 | isNotBool e2 
+then e1 
+else (Or (eval e1 s) (eval e2 s)))"                            
+| "eval (Eql e1 e2) s = 
+(if isAtomic e1 & isAtomic e2
+then BoolExp (e1 = e2)
+else Eql (eval e1 s) (eval e2 s))"
 | "eval (Less e1 e2) s =
-     (case (eval e1 s, eval e2 s) of    
-        (IntExp n1, IntExp n2) ⇒ BoolExp (n1 < n2)
-      | _ ⇒ BoolExp False)"
+(case (e1,e2) of
+  (IntExp e3, IntExp e4) ⇒
+    (BoolExp (e3 < e4))
+  | (_, _) ⇒ Less (eval e1 s) (eval e2 s))"
 | "eval (Greater e1 e2) s =             
-     (case (eval e1 s, eval e2 s) of
-        (IntExp n1, IntExp n2) ⇒ BoolExp (n1 > n2)
-      | _ ⇒ BoolExp False)"
+(case (e1, e2) of 
+  (IntExp e3, IntExp e4) ⇒
+   BoolExp (e3 > e4)
+  | (_, _) ⇒ Greater (eval e1 s) (eval e2 s))"
 | "eval (When cnd thn) s = 
 (case (eval cnd s) of 
   (BoolExp True) ⇒ eval thn s
@@ -115,14 +148,10 @@ then
         BoolExp True ⇒ eval thn s 
       | _ ⇒ eval els s)
 else eval thn s)"            
-| "eval (Plus e1 e2) s =
-     (case (eval e1 s, eval e2 s) of
-        (IntExp n1, IntExp n2) ⇒ IntExp (n1 + n2)
-      | _ ⇒ IntExp 0)"  
+| "eval (Plus e1 e2) s = 
+Plus (eval e1 s) (eval e2 s)"
 | "eval (Subtract e1 e2) s =
-     (case (eval e1 s, eval e2 s) of
-        (IntExp n1, IntExp n2) ⇒ IntExp (n1 - n2)
-      | _ ⇒ IntExp 0)"  
+Subtract (eval e1 s) (eval e2 s)"
 
 (* informal semantics of the desugarer via an intepreter *)
 fun desugar :: "exp ⇒ exp" where 
@@ -153,31 +182,13 @@ Operational semantics and ASTs are the primary ways to model programs as mathema
 In the dragon book, second edition, it says that correctness is crucial
 for compilers. And it happens that one mathematical property of compilers is correctness.
 *)
-lemma var1: "eval (desugar (VarExp a)) s = eval (VarExp a) s"
-  apply (induction a)
-  apply(auto) 
-
-lemma bool1: "eval (desugar (BoolExp a)) s = eval (BoolExp a) s"
-  apply(induction a)
-   apply(auto)  
-
-lemma desugar1: "eval (desugar (Quote a)) s = eval (Quote a) s"
-  apply(induction a)         
-               apply (auto) 
-
-lemma desugar2: "desugar a1 = a1 ⟹ desugar a2 = a2 ⟹ isBool a1 ⟹ isBool a2 ⟹ False"
-  apply(induction a1)
-  apply (auto)    
-lemma desugar3: "desugar a2 = a2 ⟹ isBool a2 ⟹ False"
-  apply (induction a2)
-               apply (auto) 
 
 theorem desugarer: "eval (desugar a) s = eval a s"               
   apply (induction a)    
-             apply (simp)
+  apply (simp)
+  done
 
-
-
+end
 
 
 
