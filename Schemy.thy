@@ -112,11 +112,16 @@ else e2)"
 | "desugar (IntExp i) = IntExp i"
 | "desugar (BoolExp b) = BoolExp b" 
 
-lemma desugar1: "eval a s = desugar a" 
-  apply (induction a)
-  apply (auto)
-       
 theorem desugarer: "eval (desugar a) s = eval a s" 
   apply (induction a)
              apply (auto)
-                                             
+                           
+
+           
+
+                             
+                
+
+
+
+
