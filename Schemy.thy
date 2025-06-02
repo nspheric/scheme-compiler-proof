@@ -153,7 +153,6 @@ Plus (eval e1 s) (eval e2 s)"
 | "eval (Subtract e1 e2) s =
 Subtract (eval e1 s) (eval e2 s)"
 
-(* informal semantics of the desugarer via an intepreter *)
 fun desugar :: "exp ⇒ exp" where 
 "desugar (And e1 e2) = 
 (if (isBool e1) & (isBool e2) 
