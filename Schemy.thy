@@ -18,6 +18,17 @@ datatype exp =
   | Subtract exp exp
   | If exp exp exp 
 
+(* instruction datatype taken from "concrete semantics" 
+i.e., http://concrete-semantics.org/concrete-semantics.pdf *)
+datatype instruction =
+   LOADI int 
+   | LOAD string 
+   | ADD 
+   | STORE string
+   | JMP int 
+   | JMPLESS int 
+   | JMPGE int   
+
 fun isBool :: "exp  ⇒ bool" where
 "isBool (And e1 e2) = True"
 | "isBool (Or e1 e2) = True" 
