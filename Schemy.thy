@@ -180,16 +180,7 @@ for compilers. And it happens that one mathematical property of compilers is cor
 
 theorem desugarer: "eval (desugar a) s = eval a s"               
   apply (induction a)    
-  apply (simp)
+  apply (auto)
   done
 
 end
-
-
-
-                             
-                
-
-
-
-
