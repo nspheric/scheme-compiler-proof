@@ -1,7 +1,5 @@
 take a look at this paper https://www.cse.chalmers.se/~myreen/cpp2021-bootstrap-myreen.pdf 
-the cakeml publications are also nice and the compcert paper
-
-im learning from these books
+and the [cakeml papers](https://cakeml.org/publications.html) are also nice and the [compcert paper](https://www.cs.utexas.edu/~bornholt/courses/cs345h-22au/papers/compcert.pdf) and http://adam.chlipala.net/papers/ImpurePOPL10/ImpurePOPL10.pdf 
 - http://concrete-semantics.org
 - http://adam.chlipala.net/frap/frap_book.pdf
 
